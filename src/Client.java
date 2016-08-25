@@ -46,8 +46,9 @@ public class Client implements Runnable {
 	public Client(String host, int port, String name) throws UnknownHostException, IOException {
 		
 		this.socket = new Socket(host, port);
-		//this.socket = new Socket(IP, port); must conver to inetaddress
+		//this.socket = new Socket(IP, port); must conver to inetaddress, do later
 		this.name = name;
+		//UsersOnline.add(name); //could do this but wanna control from server
 		client_count++;
 		this.client_ID=client_count;
 		IN = new Scanner(socket.getInputStream());
@@ -62,7 +63,7 @@ public class Client implements Runnable {
 	 */
 	private void initialize() {
 		
-		frame = new JFrame();
+		frame = new JFrame(name);
 		frame.setBounds(100, 100, 450, 300);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.getContentPane().setLayout(null);
@@ -109,6 +110,11 @@ public class Client implements Runnable {
 				OutputStream out = socket.getOutputStream();
 		        OUT = new PrintWriter(out);
 		        OUT.flush();
+				String [] NAMES = new String[UsersOnline.size()];
+				NAMES = UsersOnline.toArray(NAMES);
+				frame.getContentPane().add(scrollPane);
+				scrollPane.setViewportView(list);
+				list.setListData(NAMES);
 		        if(IN.hasNext())
 		        {
 		            String MESSAGE = IN.nextLine();
