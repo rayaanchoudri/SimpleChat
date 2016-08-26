@@ -11,6 +11,7 @@ import java.awt.Event;
 import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.io.ObjectInputStream.GetField;
+import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.awt.event.ActionEvent;
@@ -99,8 +100,12 @@ public class Client_GUI{
 					int portnum = Integer.parseInt(portField.getText());
 					String name = nameField.getText();
 					try {
-						Thread client = new Thread(new Client("localhost", portnum, name));
-						client.start();
+						Client client = new Client("localhost", portnum, name);
+						PrintWriter OUT = new PrintWriter(client.getOUT());
+				        OUT.println(name);
+				        OUT.flush();
+						Thread newclient = new Thread(client);
+						newclient.start();
 					} catch (UnknownHostException e1) {
 						e1.printStackTrace();
 					} catch (IOException e1) {

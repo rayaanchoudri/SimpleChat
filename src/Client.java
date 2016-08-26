@@ -13,8 +13,11 @@ import javax.print.DocFlavor.INPUT_STREAM;
 import javax.print.attribute.standard.OutputDeviceAssigned;
 import javax.swing.JButton;
 import java.awt.event.ActionListener;
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.ObjectInput;
 import java.io.ObjectInputStream;
 import java.io.OutputStream;
@@ -30,14 +33,13 @@ public class Client implements Runnable {
 	private JFrame frame;
 	private JList list;
 	private JScrollPane scrollPane;
-	public static ArrayList<String> UsersOnline = new ArrayList<String>();
 	private static int client_count = 0;
 	private JButton chatButton;
 	private int client_ID;
 	private String name;
 	private Socket socket;
 	private Scanner IN;
-	private PrintWriter OUT;
+	private OutputStream OUT;
 	
 	
 	/**
@@ -51,11 +53,7 @@ public class Client implements Runnable {
 		//UsersOnline.add(name); //could do this but wanna control from server
 		client_count++;
 		this.client_ID=client_count;
-		IN = new Scanner(socket.getInputStream());
-        OUT = new PrintWriter(socket.getOutputStream());
-        OUT.println(name);
-        OUT.flush();
-		initialize();
+		OUT=socket.getOutputStream();
 		
 	}
 	/**
@@ -88,43 +86,32 @@ public class Client implements Runnable {
 		
 	}
 	
-	public void updateClientList() throws IOException, ClassNotFoundException{
-		ObjectInputStream o = new ObjectInputStream(socket.getInputStream());
-		Object temp = o.readObject();
-		UsersOnline = (ArrayList<String>)temp;
-		for(int i =0;i<UsersOnline.size();i++)
-			System.out.println(UsersOnline.get(i));
-		
-		String [] NAMES = new String[UsersOnline.size()];
-		NAMES = UsersOnline.toArray(NAMES);
+	public void updateClientList(String Message) throws IOException, ClassNotFoundException{	
+		String temp = Message.replace("NEWCLIENTSIG!", "");
+		String [] NAMES = temp.split(",");
 		frame.getContentPane().add(scrollPane);
 		scrollPane.setViewportView(list);
 		list.setListData(NAMES);
+		System.out.println(NAMES);
+	}
+	public OutputStream getOUT() throws IOException {
+		return OUT;
 	}
 	@Override
 	public void run() {
+		initialize();
 		while(true){
 			try {
-				InputStream in = socket.getInputStream();
-				IN = new Scanner(in);
-				OutputStream out = socket.getOutputStream();
-		        OUT = new PrintWriter(out);
-		        OUT.flush();
-				String [] NAMES = new String[UsersOnline.size()];
-				NAMES = UsersOnline.toArray(NAMES);
-				frame.getContentPane().add(scrollPane);
-				scrollPane.setViewportView(list);
-				list.setListData(NAMES);
+				IN = new Scanner(socket.getInputStream());
 		        if(IN.hasNext())
 		        {
-		            String MESSAGE = IN.nextLine();
-		            IN.nextLine();
-		
+		        	
+		        	String MESSAGE = IN.nextLine();
 		            if(MESSAGE.contains("NEWCLIENTSIG!"))
-		            {
-		            	System.out.println(MESSAGE);
-		                updateClientList();
-		            }
+		            	{
+		            		
+		            		updateClientList(MESSAGE);
+		            	}
 		          
 		        }
 			} catch (IOException e) {

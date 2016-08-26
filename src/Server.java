@@ -5,6 +5,9 @@ import java.net.*;
 import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.zip.GZIPOutputStream;
+
+import javax.xml.stream.events.Namespace;
+
 import java.util.HashMap;
 
 public class Server implements Runnable{
@@ -14,21 +17,19 @@ public class Server implements Runnable{
 	 */
 		private ServerSocket serversocket;
 		
-		private static ArrayList<Socket> clients; 
-		private static ArrayList<String> client_names;
+		private ArrayList<ConnectedClient> connectedClients;
 		
 	
 	public static void main(String[] args) throws UnknownHostException, IOException, InterruptedException {
 			
 			Thread host = new Thread(new Server(17));
-			
 			host.start();
 			
 		}
 	public Server(int port) throws UnknownHostException, IOException {
 		this.serversocket = new ServerSocket(port);
-		this.clients = new ArrayList<Socket>();
-		this.client_names = new ArrayList<String>();
+		this.connectedClients = new ArrayList<ConnectedClient>();
+		
 		
 	}
 	public void run(){
@@ -38,8 +39,7 @@ public class Server implements Runnable{
 				Socket socket = serversocket.accept();
 				Scanner INPUT = new Scanner(socket.getInputStream());
 				String name = INPUT.nextLine();
-		        client_names.add(name);
-				clients.add(socket);
+		        this.connectedClients.add(new ConnectedClient(socket, name));
 				System.out.println("Client " + name  +" is connected.");
 				updateClients();
 				
@@ -57,23 +57,24 @@ public class Server implements Runnable{
 		}
 	
 	}
-	public static void updateClients() throws IOException
+	public void updateClients() throws IOException
     {
         
-        
-        for(int i = 0; i < Server.clients.size(); i++)
+        for(int i = 0; i < connectedClients.size(); i++)
         {
-        	OutputStream o = clients.get(i).getOutputStream();
-            PrintWriter OUT = new PrintWriter(o);
-            OUT.println("NEWCLIENTSIG!");
-            OUT.flush();
-            ObjectOutputStream objectOutput = new ObjectOutputStream(o);
-            objectOutput.writeObject(client_names);
-          
+        	PrintWriter client_out = new PrintWriter(connectedClients.get(i).getOutStream());
+        	String names = "";
+        	for(int j = 0; j<connectedClients.size(); j++){
+        		names = names.concat(connectedClients.get(j).getName()+",");
+        		
+        	}
+        	System.out.println(names);
+        	client_out.println("NEWCLIENTSIG!" + names);
+        	client_out.flush();
         }
     }
-	public static Socket getClient(int i){
-		return clients.get(i);
+	public ConnectedClient getClient(int i){
+		return connectedClients.get(i);
 		
 	}
 	/**
